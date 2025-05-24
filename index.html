@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Pagamentos</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header>
+            <h1>Dashboard de Pagamentos</h1>
+            <div class="period-selector">
+                <label for="year-select">Ano:</label>
+                <select id="year-select">
+                    <option value="2023">2023</option>
+                    <option value="2024">2024</option>
+                    <option value="2025" selected>2025</option>
+                </select>
+                <label for="month-select">Mês:</label>
+                <select id="month-select">
+                    <option value="01">Janeiro</option>
+                    <option value="02">Fevereiro</option>
+                    <option value="03">Março</option>
+                    <option value="04">Abril</option>
+                    <option value="05">Maio</option>
+                    <option value="06">Junho</option>
+                    <option value="07">Julho</option>
+                    <option value="08">Agosto</option>
+                    <option value="09">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
+                </select>
+                <button id="add-data-btn" class="btn btn-primary"><i class="fas fa-plus"></i> Adicionar Dados</button>
+                <button id="export-data-btn" class="btn btn-secondary"><i class="fas fa-download"></i> Exportar Dados</button>
+            </div>
+        </header>
+
+        <div class="filters-container">
+            <div class="filter-group">
+                <label for="filter-date">Filtrar por Data:</label>
+                <select id="filter-date">
+                    <option value="all">Todas as Datas</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filter-service">Filtrar por Serviço:</label>
+                <select id="filter-service">
+                    <option value="all">Todos os Serviços</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filter-bank">Filtrar por Banco:</label>
+                <select id="filter-bank">
+                    <option value="all">Todos os Bancos</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filter-client">Filtrar por Cliente:</label>
+                <select id="filter-client">
+                    <option value="all">Todos os Clientes</option>
+                </select>
+            </div>
+            <button id="reset-filters" class="btn">Limpar Filtros</button>
+        </div>
+
+        <div class="summary-cards">
+            <div class="card">
+                <div class="card-icon"><i class="fas fa-money-bill-wave"></i></div>
+                <div class="card-content">
+                    <h3>Valor Total</h3>
+                    <p id="total-value">R$ 0,00</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon"><i class="fas fa-file-invoice"></i></div>
+                <div class="card-content">
+                    <h3>Total de Transações</h3>
+                    <p id="total-transactions">0</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon"><i class="fas fa-users"></i></div>
+                <div class="card-content">
+                    <h3>Total de Clientes</h3>
+                    <p id="total-clients">0</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon"><i class="fas fa-calendar-day"></i></div>
+                <div class="card-content">
+                    <h3>Média Diária</h3>
+                    <p id="daily-average">R$ 0,00</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3>Pagamentos por Dia</h3>
+                <div class="chart-wrapper">
+                    <canvas id="daily-payments-chart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Distribuição por Serviço</h3>
+                <div class="chart-wrapper">
+                    <canvas id="services-chart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Distribuição por Banco</h3>
+                <div class="chart-wrapper">
+                    <canvas id="banks-chart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Top 5 Clientes</h3>
+                <div class="chart-wrapper">
+                    <canvas id="clients-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <h3>Detalhamento de Pagamentos</h3>
+            <div class="table-controls">
+                <div class="search-container">
+                    <input type="text" id="search-input" placeholder="Buscar...">
+                    <button id="search-button" class="btn"><i class="fas fa-search"></i></button>
+                </div>
+                <div class="sort-container">
+                    <label for="sort-select">Ordenar por:</label>
+                    <select id="sort-select">
+                        <option value="date-asc">Data (Crescente)</option>
+                        <option value="date-desc">Data (Decrescente)</option>
+                        <option value="value-asc">Valor (Crescente)</option>
+                        <option value="value-desc">Valor (Decrescente)</option>
+                        <option value="client-asc">Cliente (A-Z)</option>
+                        <option value="client-desc">Cliente (Z-A)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="payments-table">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Data</th>
+                            <th>Valor Pago</th>
+                            <th>Serviço</th>
+                            <th>Banco</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Dados serão inseridos via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination">
+                <button id="prev-page" class="btn"><i class="fas fa-chevron-left"></i> Anterior</button>
+                <span id="page-info">Página 1 de 1</span>
+                <button id="next-page" class="btn">Próximo <i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para adicionar/editar dados -->
+    <div id="data-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modal-title">Adicionar Novo Pagamento</h2>
+            <form id="payment-form">
+                <input type="hidden" id="edit-id" value="">
+                <div class="form-group">
+                    <label for="input-client">Cliente:</label>
+                    <input type="text" id="input-client" required>
+                </div>
+                <div class="form-group">
+                    <label for="input-date">Data:</label>
+                    <input type="date" id="input-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="input-value">Valor (R$):</label>
+                    <input type="number" id="input-value" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="input-service">Serviço:</label>
+                    <select id="input-service" required>
+                        <option value="Fotolito">Fotolito</option>
+                        <option value="Mão de Obra">Mão de Obra</option>
+                        <option value="Mão de Obra/Foto">Mão de Obra/Foto</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="input-bank">Banco:</label>
+                    <select id="input-bank" required>
+                        <option value="Bradesco">Bradesco</option>
+                        <option value="Itau">Itaú</option>
+                        <option value="Nubank">Nubank</option>
+                        <option value="Pagbank">Pagbank</option>
+                        <option value="Dinheiro">Dinheiro</option>
+                        <option value="Pix">Pix</option>
+                    </select>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                    <button type="button" class="btn btn-cancel" id="cancel-form">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <p>Dashboard de Pagamentos - Atualizado em <span id="last-update"></span></p>
+    </footer>
+
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
